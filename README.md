@@ -19,7 +19,8 @@ The project originated from g4br-i's repository **KathaRange** (https://github.c
 - Python 3
 - Katharà Python API (installation instructions in Getting Started section)
 
-## Getting Started
+## Demo Lab Setup
+### Getting Started
 Launch the script in the root of the project:
 
     ./build_images.sh
