@@ -207,14 +207,6 @@ fi
 echo -e "${BLUE}Building images for the lab...${RESET}"
 services=( "snort" "tomcat" "caldera" "vuln_apache" "kali" "metasploitable")
 
-if [[ -f "$DOCKERFILES_DIR/.env" ]]; then
-    set -a
-    source "$DOCKERFILES_DIR/.env"
-    set +a
-else
-    echo -e "${RED}.env file not found in $DOCKERFILES_DIR. Exiting.${RESET}"
-    exit 1
-fi
 
 cd "$DOCKERFILES_DIR"
 
