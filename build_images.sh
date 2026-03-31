@@ -182,27 +182,48 @@ mkdir -p "$RULES_DEST"
 if [[ -f "$LOCAL_RULES" ]]; then
     echo -e "${GREEN}Snort3 rules already exist in $RULES_DEST.${RESET}"
 else
-    # Download tarball only if not already present
+    echo -e "${YELLOW}Snort3 rules missing. Downloading...${RESET}"
+
+    # Download only if missing
     if [[ ! -f "$DOWNLOAD_TAR" ]]; then
         check_and_download_file "$DOWNLOAD_TAR" \
             "https://www.snort.org/downloads/community/$SNORT3_RULES_TAR_FILE" \
             "$RULES_DEST"
     fi
 
-    # Extract in user-writable directory
-    tar -xvf "$DOWNLOAD_TAR" -C "$RULES_DEST"
+    # Validate archive before extracting
+    if ! tar -tzf "$DOWNLOAD_TAR" >/dev/null 2>&1; then
+        echo -e "${RED}Corrupted or invalid Snort archive. Re-downloading...${RESET}"
+        rm -f "$DOWNLOAD_TAR"
+
+        check_and_download_file "$DOWNLOAD_TAR" \
+            "https://www.snort.org/downloads/community/$SNORT3_RULES_TAR_FILE" \
+            "$RULES_DEST"
+
+        # second validation
+        if ! tar -tzf "$DOWNLOAD_TAR" >/dev/null 2>&1; then
+            echo -e "${RED}Download failed twice. Aborting.${RESET}"
+            exit 1
+        fi
+    fi
+
+    # Extract safely
+    rm -rf "$EXTRACT_DIR"
+    mkdir -p "$EXTRACT_DIR"
+
+    tar -xvzf "$DOWNLOAD_TAR" -C "$RULES_DEST"
+
     chmod -R 755 "$EXTRACT_DIR"
 
-    # Copy main rules file to destination
+    # Copy rules file
     cp "$EXTRACT_DIR/$SNORT3_RULES_FILE" "$RULES_DEST/"
 
-    # Clean up extracted folder and tarball
+    # Cleanup
     rm -rf "$EXTRACT_DIR"
-    rm "$DOWNLOAD_TAR"
+    rm -f "$DOWNLOAD_TAR"
 
-    echo -e "${GREEN}Downloaded and installed Snort3 rules to $RULES_DEST.${RESET}"
+    echo -e "${GREEN}✔ Snort3 rules installed successfully in $RULES_DEST.${RESET}"
 fi
-
 
 echo -e "${BLUE}Building images for the lab...${RESET}"
 services=( "snort" "tomcat" "caldera" "vuln_apache" "kali" "metasploitable")
