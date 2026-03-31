@@ -1,5 +1,6 @@
 lab:
-  description: "KathaRange-demo"
+  name: "KathaRange-demo"
+  description: "This is a demo lab"
   version: "1.0"
   author: "F. Pittacolo"
 
