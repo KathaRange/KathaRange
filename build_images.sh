@@ -182,69 +182,47 @@ mkdir -p "$RULES_DEST"
 if [[ -f "$LOCAL_RULES" ]]; then
     echo -e "${GREEN}Snort3 rules already exist in $RULES_DEST.${RESET}"
 else
-    echo -e "${YELLOW}Snort3 rules missing. Downloading...${RESET}"
-
-    # Download only if missing
+    # Download tarball only if not already present
     if [[ ! -f "$DOWNLOAD_TAR" ]]; then
         check_and_download_file "$DOWNLOAD_TAR" \
             "https://www.snort.org/downloads/community/$SNORT3_RULES_TAR_FILE" \
             "$RULES_DEST"
     fi
 
-    # Validate archive before extracting
-    if ! tar -tzf "$DOWNLOAD_TAR" >/dev/null 2>&1; then
-        echo -e "${RED}Corrupted or invalid Snort archive. Re-downloading...${RESET}"
-        rm -f "$DOWNLOAD_TAR"
-
-        check_and_download_file "$DOWNLOAD_TAR" \
-            "https://www.snort.org/downloads/community/$SNORT3_RULES_TAR_FILE" \
-            "$RULES_DEST"
-
-        # second validation
-        if ! tar -tzf "$DOWNLOAD_TAR" >/dev/null 2>&1; then
-            echo -e "${RED}Download failed twice. Aborting.${RESET}"
-            exit 1
-        fi
-    fi
-
-    # Extract safely
-    rm -rf "$EXTRACT_DIR"
-    mkdir -p "$EXTRACT_DIR"
-
-    tar -xvzf "$DOWNLOAD_TAR" -C "$RULES_DEST"
-
+    # Extract in user-writable directory
+    tar -xvf "$DOWNLOAD_TAR" -C "$RULES_DEST"
     chmod -R 755 "$EXTRACT_DIR"
 
-    # Copy rules file
+    # Copy main rules file to destination
     cp "$EXTRACT_DIR/$SNORT3_RULES_FILE" "$RULES_DEST/"
 
-    # Cleanup
+    # Clean up extracted folder and tarball
     rm -rf "$EXTRACT_DIR"
-    rm -f "$DOWNLOAD_TAR"
+    rm "$DOWNLOAD_TAR"
 
-    echo -e "${GREEN}✔ Snort3 rules installed successfully in $RULES_DEST.${RESET}"
+    echo -e "${GREEN}Downloaded and installed Snort3 rules to $RULES_DEST.${RESET}"
 fi
 
-echo -e "${BLUE}Building images for the lab...${RESET}"
-services=( "snort" "tomcat" "caldera" "vuln_apache" "kali" "metasploitable")
 
+echo -e "${BLUE}Building images for the lab...${RESET}"
+
+services=( "snort" "tomcat" "caldera" "vuln_apache" "kali" "metasploitable")
 
 cd "$DOCKERFILES_DIR"
 
 for service in "${services[@]}"; do
-    service_var_name=$(echo "${service^^}_VERSION")
-    service_version=${!service_var_name}
+    image="$service"
 
-    if ! image_exists "$service:$service_version"; then
-        echo -e "${YELLOW}Building service: $service:$service_version...${RESET}"
-        docker_build_image "$service"
-    else 
-        if ! prompt_user "Service image $service:$service_version already exist. Do you want to rebuild it"; then
-            echo -e "${GREEN}Using existing $service:$service_version image.${RESET}"
+    if image_exists "$image"; then
+        if prompt_user "Image $image already exists. Do you want to rebuild it?"; then
+            echo -e "${YELLOW}Rebuilding $image...${RESET}"
+            docker compose -f build-images.yml build --no-cache "$service"
         else
-            echo -e "${YELLOW}Building service: $service:$service_version...${RESET}"
-            docker_build_image "$service"
+            echo -e "${GREEN}Using existing $image${RESET}"
         fi
+    else
+        echo -e "${YELLOW}Building missing image $image...${RESET}"
+        docker compose -f build-images.yml build "$service"
     fi
 done
 
