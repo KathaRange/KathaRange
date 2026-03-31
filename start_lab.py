@@ -36,7 +36,7 @@ if __name__ == "__main__":
         
         # Load lab configuration
         lab_info, devices = lab_manager.load_lab()
-        lab_name = lab_info.get("description")
+        lab_name = lab_info.get("name")
         lab_manager.lab_name = lab_name
         if os.path.isfile(os.path.join(lab_folder,"actions.yaml")):
             try: 
