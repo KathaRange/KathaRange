@@ -21,9 +21,14 @@ The project originated from g4br-i's repository **KathaRange** (https://github.c
 
 ## Demo Lab Setup
 ### Getting Started
-Launch the script in the root of the project:
-
-    ./build_images.sh
+First, give execution permissions to the build script:
+```bash
+chmod +x ./build_images.sh
+```
+Then launch the script from the root of the project:
+```bash
+sudo ./build_images.sh
+```
 The script will automatically clone all dependencies and build all images needed by the demo lab. You can go grab a coffee, it will take some time to complete :coffee:
 
 Once the process is completed, run the following commands to install Katharà Python API:
